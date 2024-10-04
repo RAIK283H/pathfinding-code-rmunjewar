@@ -18,6 +18,7 @@ class Player:
         self.sprite = pyglet.sprite.Sprite(img=self.player_image, x=0, y=0, batch=batch, group=group)
         self.player_config_data = player_config_data
         self.distance_traveled = 0
+        self.nodes_visited = set()
 
     def update_location(self, x, y):
         self.sprite.update(relative_display_functions.get_relative_graph_x(x) - self.sprite.width / 2,
@@ -28,6 +29,7 @@ class Player:
         self.absolute_x = graph_data.graph_data[global_game_data.current_graph_index][0][0][0]
         self.absolute_y = graph_data.graph_data[global_game_data.current_graph_index][0][0][1]
         self.distance_traveled = 0
+        self.nodes_visited.clear()
 
     def update(self, dt):
         last_absolute_x = self.absolute_x
@@ -48,6 +50,8 @@ class Player:
 
         # Move player under normal circumstances
         if self.current_objective >= 0 and global_game_data.current_player_index == self.player_index:
+            current_node = global_game_data.graph_paths[self.player_index][self.current_objective]
+            self.nodes_visited.add(current_node)
             target_x = graph_data.graph_data[global_game_data.current_graph_index][
                 global_game_data.graph_paths[self.player_index][self.current_objective]][0][0]
             target_y = graph_data.graph_data[global_game_data.current_graph_index][
