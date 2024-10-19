@@ -80,6 +80,29 @@ class TestPathFinding(unittest.TestCase):
         self.assertIn(2, path)  # target
         self.assertTrue(self.is_valid_path(path))
 
+    def test_dfs_path_different_start_target_end(self):
+        global_game_data.current_graph_index = 1
+        path = pathing.get_dfs_path()
+        self.assertEqual(path[0], 0, "DFS path must start at node 0")
+        self.assertEqual(path[-1], 3, "DFS path must end at the last node")
+
+        self.assertIn(3, path, "DFS path must include the target node")
+
+        graph = graph_data.graph_data[global_game_data.current_graph_index]
+        for i in range(len(path) - 1):
+            self.assertIn(path[i + 1], graph[path[i]][1], "Sequential nodes in the DFS path must be connected")
+
+    def test_bfs_path_different_start_target_end(self):
+        global_game_data.current_graph_index = 1
+        path = pathing.get_bfs_path()
+        self.assertEqual(path[0], 0, "BFS path must start at node 0")
+        self.assertEqual(path[-1], 3, "BFS path must end at the last node")
+        self.assertIn(3, path, "BFS path must include the target node")
+        graph = graph_data.graph_data[global_game_data.current_graph_index]
+        for i in range(len(path) - 1):
+            self.assertIn(path[i + 1], graph[path[i]][1], "Sequential nodes in the BFS path must be connected")
+
+
     def is_valid_path(self, path):
         graph = graph_data.graph_data[global_game_data.current_graph_index]
         return all(path[i+1] in graph[path[i]][1] for i in range(len(path)-1))
