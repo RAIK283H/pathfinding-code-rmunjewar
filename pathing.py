@@ -58,7 +58,6 @@ def get_random_path():
 
 def get_dfs_path():
     return [1,2]
-#hello
 
 
 def get_bfs_path():
