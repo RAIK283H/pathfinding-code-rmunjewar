@@ -1,6 +1,10 @@
 import math
 import unittest
 
+import global_game_data
+import graph_data
+import pathing
+
 
 class TestPathFinding(unittest.TestCase):
 
@@ -22,6 +26,64 @@ class TestPathFinding(unittest.TestCase):
         self.assertAlmostEqual(first=first_value,second=second_value,delta=1e-9)
         self.assertNotEqual(almost_pi, pi)
         self.assertAlmostEqual(first=almost_pi, second=pi, delta=1e-1)
+
+    def setUp(self):
+        global_game_data.current_graph_index = 0
+        graph_data.graph_data = [
+            [((0, 0), [1, 2]), ((1, 1), [0, 3]), ((2, 2), [0, 3]), ((3, 3), [1, 2, 4]), ((4, 4), [3])]
+        ]
+        global_game_data.target_node = [2]
+
+    def setUp(self):
+        self.graph1 = [
+            (0, [1]),    
+            (1, [0, 2]), 
+            (2, [1, 3]), 
+            (3, [2])    
+        ]
+        
+        self.graph2 = [
+            (0, [1, 2]),
+            (1, [0, 3]), 
+            (2, [0, 3]), 
+            (3, [1, 2]) 
+        ]
+        
+        graph_data.graph_data = [self.graph1, self.graph2]
+        global_game_data.current_graph_index = 0
+        global_game_data.target_node = [2, 3]  
+
+    def test_random_path_basic_graph(self): # testing on first graph
+        global_game_data.current_graph_index = 0
+        path = pathing.get_random_path()
+
+        self.assertEqual(path[0], 0, "Path must start at node 0")
+        self.assertEqual(path[-1], 3, "Path must end at the last node")
+        self.assertIn(2, path, "Path must include the target node")
+        graph = graph_data.graph_data[global_game_data.current_graph_index]
+        for i in range(len(path) - 1):
+            self.assertIn(path[i + 1], graph[path[i]][1], "Sequential nodes in the path must be connected")
+
+    def test_dfs_path(self):
+        path = pathing.get_dfs_path()
+        self.assertIsNotNone(path)
+        self.assertEqual(path[0], 0)  # start
+        self.assertEqual(path[-1], 3)  # end
+        self.assertIn(2, path)  # target
+        self.assertTrue(self.is_valid_path(path))
+
+    def test_bfs_path(self):
+        path = pathing.get_bfs_path()
+        self.assertIsNotNone(path)
+        self.assertEqual(path[0], 0)  # start
+        self.assertEqual(path[-1], 3)  # end
+        self.assertIn(2, path)  # target
+        self.assertTrue(self.is_valid_path(path))
+
+    def is_valid_path(self, path):
+        graph = graph_data.graph_data[global_game_data.current_graph_index]
+        return all(path[i+1] in graph[path[i]][1] for i in range(len(path)-1))
+
 
 
 if __name__ == '__main__':
