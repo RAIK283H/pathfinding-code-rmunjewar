@@ -4,6 +4,7 @@ import unittest
 import global_game_data
 import graph_data
 import pathing
+from permutation import sjt_permutations, is_hamiltonian_cycle
 
 
 class TestPathFinding(unittest.TestCase):
@@ -106,6 +107,31 @@ class TestPathFinding(unittest.TestCase):
     def is_valid_path(self, path):
         graph = graph_data.graph_data[global_game_data.current_graph_index]
         return all(path[i+1] in graph[path[i]][1] for i in range(len(path)-1))
+
+class TestPermutation(unittest.TestCase):
+    def test_sjt_permutations(self):
+        perms = list(sjt_permutations(3))
+        expected = [[1, 2], [2, 1]]
+        self.assertEqual(perms, expected)
+
+    def test_is_hamiltonian_cycle(self):
+        graph = [
+            [0, 1, 0, 1],
+            [1, 0, 1, 1],
+            [0, 1, 0, 1],
+            [1, 1, 1, 0]
+        ]
+        path = [1, 2] 
+        self.assertTrue(is_hamiltonian_cycle(graph, path))
+
+    def test_no_hamiltonian_cycle(self):
+        graph = [
+            [0, 1, 0],
+            [1, 0, 0],
+            [0, 0, 0]
+        ]
+        path = [1]  
+        self.assertFalse(is_hamiltonian_cycle(graph, path))
 
 
 
