@@ -64,20 +64,39 @@ def calculate_distance(graph, cycle):
 def find_optimal_cycles(graph):
     n = len(graph)
     valid_cycles = []
-
-    for perm in sjt_permutations(n - 2):
-        cycle = [0] + perm + [n - 1]
-        if is_hamiltonian_cycle(graph, cycle):
+    
+    for perm in sjt_permutations(n - 1):
+        cycle = [0] + perm + [n - 1, 0] 
+        if is_hamiltonian_cycle(graph, cycle[:-1]):  
             distance = calculate_distance(graph, cycle)
-            valid_cycles.append((cycle, distance))
-
+            valid_cycles.append((cycle[:-1], distance)) 
+    
     if not valid_cycles:
-        return None
-
+        return [] 
+        
     min_distance = min(distance for _, distance in valid_cycles)
-    optimal_cycles = [cycle for cycle, distance in valid_cycles if distance == min_distance]
-
+    optimal_cycles = [(cycle, distance) for cycle, distance in valid_cycles if distance == min_distance]
+    
     return optimal_cycles
+
+def find_largest_clique(graph):
+    n = len(graph)
+    nodes = list(range(1, n - 1)) 
+    largest_clique = []
+    current_subset = []
+    
+    def generate_subsets(start):
+        nonlocal largest_clique
+        if is_clique(graph, current_subset) and len(current_subset) > len(largest_clique):
+            largest_clique = current_subset.copy()
+        
+        for i in range(start, len(nodes)):
+            current_subset.append(nodes[i])
+            generate_subsets(i + 1)
+            current_subset.pop()
+    
+    generate_subsets(0)
+    return largest_clique
 
 def is_clique(graph, subset):
     for i in range(len(subset)):
@@ -85,22 +104,3 @@ def is_clique(graph, subset):
             if graph[subset[i]][subset[j]] == 0:
                 return False
     return True
-
-def find_largest_clique(graph):
-    n = len(graph)
-    nodes = list(range(1, n - 1))
-    largest_clique = []
-
-    def generate_subsets(subset, index):
-        nonlocal largest_clique
-        if is_clique(graph, subset) and len(subset) > len(largest_clique):
-            largest_clique = subset[:]
-
-        for i in range(index, len(nodes)):
-            subset.append(nodes[i])
-            generate_subsets(subset, i + 1)
-            subset.pop()
-
-    generate_subsets([], 0)
-
-    return largest_clique

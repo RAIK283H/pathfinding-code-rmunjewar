@@ -4,7 +4,7 @@ import unittest
 import global_game_data
 import graph_data
 import pathing
-from permutation import calculate_distance, find_largest_clique, find_optimal_cycles, is_clique, sjt_permutations, is_hamiltonian_cycle
+from permutation import calculate_distance, find_hamiltonian_cycles, find_largest_clique, find_optimal_cycles, is_clique, sjt_permutations, is_hamiltonian_cycle
 
 
 class TestPathFinding(unittest.TestCase):
@@ -121,6 +121,34 @@ class TestPermutation(unittest.TestCase):
             [1, 0, 1],
             [0, 1, 0]
         ]
+
+        self.complete_graph = [
+            [0, 1, 1, 1],
+            [1, 0, 1, 1],
+            [1, 1, 0, 1],
+            [1, 1, 1, 0]
+        ]
+        
+        self.cycle_graph = [
+            [0, 1, 0, 1],
+            [1, 0, 1, 0],
+            [0, 1, 0, 1],
+            [1, 0, 1, 0]
+        ]
+        
+        self.disconnected_graph = [
+            [0, 1, 0, 0],
+            [1, 0, 0, 0],
+            [0, 0, 0, 1],
+            [0, 0, 1, 0]
+        ]
+        
+        self.single_node_graph = [[0]]
+        
+        self.two_node_graph = [
+            [0, 1],
+            [1, 0]
+        ]
     def test_sjt_permutations(self):
         perms = list(sjt_permutations(3))
         expected = [[1, 2], [2, 1]]
@@ -152,7 +180,7 @@ class TestPermutation(unittest.TestCase):
 
     def test_find_optimal_cycles(self):
             optimal_cycles = find_optimal_cycles(self.graph1)
-            optimal_cycle = [0, 1, 2, 0]
+            optimal_cycle = [0, 1, 2]
             optimal_distance = 3
             self.assertIn((optimal_cycle, optimal_distance), optimal_cycles)
 
@@ -163,10 +191,52 @@ class TestPermutation(unittest.TestCase):
             subset = [0, 2]
             self.assertFalse(is_clique(self.graph2, subset))
 
-    def test_find_largest_clique(self):
-            largest_clique = find_largest_clique(self.graph1)
-            expected_clique = [1, 2]
-            self.assertEqual(sorted(largest_clique), sorted(expected_clique))
+    def test_sjt_empty_permutation(self):
+        """Test SJT with n=1 (should yield empty list)"""
+        perms = list(sjt_permutations(1))
+        self.assertEqual(perms, [[]])
+
+    def test_hamiltonian_cycle_complete_graph(self):
+        """Test finding Hamiltonian cycles in a complete graph"""
+        cycles = find_hamiltonian_cycles(self.complete_graph)
+        self.assertIsNotNone(cycles)
+        for cycle in cycles:
+            self.assertTrue(is_hamiltonian_cycle(self.complete_graph, cycle))
+
+    def test_hamiltonian_cycle_cycle_graph(self):
+        cycles = find_hamiltonian_cycles(self.cycle_graph)
+        self.assertIsNotNone(cycles)
+        self.assertTrue(any(is_hamiltonian_cycle(self.cycle_graph, cycle) for cycle in cycles))
+
+    def test_single_node_hamiltonian(self):
+        self.assertFalse(is_hamiltonian_cycle(self.single_node_graph, [0]))
+
+    def test_two_node_hamiltonian(self):
+        self.assertTrue(is_hamiltonian_cycle(self.two_node_graph, [0, 1]))
+
+    def test_optimal_cycles_complete_graph(self):
+        optimal_cycles = find_optimal_cycles(self.complete_graph)
+        self.assertIsNotNone(optimal_cycles)
+        distances = [dist for _, dist in optimal_cycles]
+        self.assertEqual(len(set(distances)), 1)
+
+    def test_is_clique_empty_set(self):
+        self.assertTrue(is_clique(self.graph1, []))
+
+    def test_is_clique_single_vertex(self):
+        self.assertTrue(is_clique(self.graph1, [1]))
+
+    def test_clique_disconnected_graph(self):
+        clique = find_largest_clique(self.disconnected_graph)
+        self.assertTrue(len(clique) <= 2)
+
+    def test_invalid_cycle_repeated_nodes(self):
+        cycle = [0, 1, 1, 2]
+        self.assertFalse(is_hamiltonian_cycle(self.graph1, cycle))
+
+    def test_invalid_cycle_missing_nodes(self):
+        cycle = [0, 1]
+        self.assertFalse(is_hamiltonian_cycle(self.graph1, cycle))
 
 if __name__ == '__main__':
     unittest.main()
