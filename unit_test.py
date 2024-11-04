@@ -4,7 +4,7 @@ import unittest
 import global_game_data
 import graph_data
 import pathing
-from permutation import sjt_permutations, is_hamiltonian_cycle
+from permutation import calculate_distance, find_largest_clique, find_optimal_cycles, is_clique, sjt_permutations, is_hamiltonian_cycle
 
 
 class TestPathFinding(unittest.TestCase):
@@ -68,17 +68,17 @@ class TestPathFinding(unittest.TestCase):
     def test_dfs_path(self):
         path = pathing.get_dfs_path()
         self.assertIsNotNone(path)
-        self.assertEqual(path[0], 0)  # start
-        self.assertEqual(path[-1], 3)  # end
-        self.assertIn(2, path)  # target
+        self.assertEqual(path[0], 0) 
+        self.assertEqual(path[-1], 3)  
+        self.assertIn(2, path) 
         self.assertTrue(self.is_valid_path(path))
 
     def test_bfs_path(self):
         path = pathing.get_bfs_path()
         self.assertIsNotNone(path)
-        self.assertEqual(path[0], 0)  # start
-        self.assertEqual(path[-1], 3)  # end
-        self.assertIn(2, path)  # target
+        self.assertEqual(path[0], 0)  
+        self.assertEqual(path[-1], 3) 
+        self.assertIn(2, path)  
         self.assertTrue(self.is_valid_path(path))
 
     def test_dfs_path_different_start_target_end(self):
@@ -109,6 +109,18 @@ class TestPathFinding(unittest.TestCase):
         return all(path[i+1] in graph[path[i]][1] for i in range(len(path)-1))
 
 class TestPermutation(unittest.TestCase):
+    def setUp(self):
+        self.graph1 = [
+            [0, 1, 1],
+            [1, 0, 1],
+            [1, 1, 0]
+        ]
+        
+        self.graph2 = [
+            [0, 1, 0],
+            [1, 0, 1],
+            [0, 1, 0]
+        ]
     def test_sjt_permutations(self):
         perms = list(sjt_permutations(3))
         expected = [[1, 2], [2, 1]]
@@ -122,7 +134,7 @@ class TestPermutation(unittest.TestCase):
             [1, 1, 1, 0]
         ]
         path = [1, 2] 
-        self.assertTrue(is_hamiltonian_cycle(graph, path))
+        self.assertFalse(is_hamiltonian_cycle(graph, path))
 
     def test_no_hamiltonian_cycle(self):
         graph = [
@@ -133,7 +145,28 @@ class TestPermutation(unittest.TestCase):
         path = [1]  
         self.assertFalse(is_hamiltonian_cycle(graph, path))
 
+    def test_calculate_distance(self):
+            cycle = [0, 1, 2, 0]
+            expected_distance = 3  
+            self.assertEqual(calculate_distance(self.graph1, cycle), expected_distance)
 
+    def test_find_optimal_cycles(self):
+            optimal_cycles = find_optimal_cycles(self.graph1)
+            optimal_cycle = [0, 1, 2, 0]
+            optimal_distance = 3
+            self.assertIn((optimal_cycle, optimal_distance), optimal_cycles)
+
+    def test_is_clique(self):
+            subset = [0, 1, 2]
+            self.assertTrue(is_clique(self.graph1, subset))
+            
+            subset = [0, 2]
+            self.assertFalse(is_clique(self.graph2, subset))
+
+    def test_find_largest_clique(self):
+            largest_clique = find_largest_clique(self.graph1)
+            expected_clique = [1, 2]
+            self.assertEqual(sorted(largest_clique), sorted(expected_clique))
 
 if __name__ == '__main__':
     unittest.main()

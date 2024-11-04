@@ -1,7 +1,7 @@
 import graph_data
 
 def sjt_permutations(n):
-    perm = list(range(1,n))
+    perm = list(range(1, n)) 
     direction = [-1] * (n - 1)
 
     yield perm[:]
@@ -30,15 +30,13 @@ def sjt_permutations(n):
         yield perm[:] 
 
 def is_hamiltonian_cycle(graph, cycle):
-   
     n = len(graph)
-
     visited = set(cycle)
     if len(visited) != n:
         return False
 
     for i in range(len(cycle) - 1):
-        if graph[cycle[i]][cycle[i + 1]] == 0:  
+        if graph[cycle[i]][cycle[i + 1]] == 0:
             return False
 
     if graph[cycle[-1]][cycle[0]] == 0:
@@ -47,20 +45,15 @@ def is_hamiltonian_cycle(graph, cycle):
     return True
 
 def find_hamiltonian_cycles(graph):
-    n = len(graph)  
+    n = len(graph)
     valid_cycles = []
 
     for perm in sjt_permutations(n - 1):
-        cycle = [0] + perm + [n - 1] 
+        cycle = [0] + perm + [n - 1]
         if is_hamiltonian_cycle(graph, cycle):
             valid_cycles.append(cycle)
-            print("hamiltonian cycle:", cycle)
 
-    if not valid_cycles:
-        print("no hamiltonian cycles found")
-        return -1
-
-    return valid_cycles
+    return valid_cycles if valid_cycles else None
 
 def calculate_distance(graph, cycle):
     total_distance = 0
@@ -72,39 +65,30 @@ def find_optimal_cycles(graph):
     n = len(graph)
     valid_cycles = []
 
-    for perm in sjt_permutations(n - 2):  
-        cycle = [0] + perm + [n - 1]  
+    for perm in sjt_permutations(n - 2):
+        cycle = [0] + perm + [n - 1]
         if is_hamiltonian_cycle(graph, cycle):
             distance = calculate_distance(graph, cycle)
             valid_cycles.append((cycle, distance))
 
     if not valid_cycles:
-        print("no hamiltonian cycles found")
-        return -1
+        return None
 
     min_distance = min(distance for _, distance in valid_cycles)
+    optimal_cycles = [cycle for cycle, distance in valid_cycles if distance == min_distance]
 
-    print("hamiltonian cycles:")
-    print("\n")
-    for cycle, distance in valid_cycles:
-        if distance == min_distance:
-            print(f"optimal hamiltonian cycle: {cycle} (distance: {distance})")
-        else:
-            print(f"hamiltonian cycle: {cycle} (distance: {distance})")
-
-    return valid_cycles
+    return optimal_cycles
 
 def is_clique(graph, subset):
     for i in range(len(subset)):
         for j in range(i + 1, len(subset)):
-            if graph[subset[i]][subset[j]] == 0:  
+            if graph[subset[i]][subset[j]] == 0:
                 return False
     return True
 
 def find_largest_clique(graph):
     n = len(graph)
     nodes = list(range(1, n - 1))
-
     largest_clique = []
 
     def generate_subsets(subset, index):
@@ -119,5 +103,4 @@ def find_largest_clique(graph):
 
     generate_subsets([], 0)
 
-    print(f"largest clique: {largest_clique} (size: {len(largest_clique)})")
     return largest_clique
