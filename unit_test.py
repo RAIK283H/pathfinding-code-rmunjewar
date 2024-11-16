@@ -50,6 +50,7 @@ class TestPathFinding(unittest.TestCase):
             (3, [1, 2]) 
         ]
         
+        
         graph_data.graph_data = [self.graph1, self.graph2]
         global_game_data.current_graph_index = 0
         global_game_data.target_node = [2, 3]  
@@ -238,5 +239,121 @@ class TestPermutation(unittest.TestCase):
         cycle = [0, 1]
         self.assertFalse(is_hamiltonian_cycle(self.graph1, cycle))
 
+class TestAdvancedPathfinding(unittest.TestCase):
+    def setUp(self):
+        self.simple_graph = [
+            ((0, 0), [1, 2]),     
+            ((1, 1), [0, 3]),       
+            ((2, 2), [0, 3]),       
+            ((3, 3), [1, 2, 4]),    
+            ((4, 4), [3])          
+        ]
+        
+        self.complex_graph = [
+            ((0, 0), [1, 2, 3]), 
+            ((1, 1), [0, 2, 4]),
+            ((2, 2), [0, 1, 3, 4]),
+            ((3, 3), [0, 2, 4]),
+            ((4, 4), [1, 2, 3])
+        ]
+
+        graph_data.graph_data = [self.simple_graph, self.complex_graph]
+        graph_data.graph_coordinates = {
+            0: (0, 0),
+            1: (1, 1),
+            2: (2, 2),
+            3: (3, 3),
+            4: (4, 4)
+        }
+        
+    def test_dijkstra_simple_graph(self):
+        global_game_data.current_graph_index = 0
+        global_game_data.target_node = [2] 
+        
+        path = pathing.get_dijkstra_path()
+        
+        self.assertIsNotNone(path)
+        self.assertEqual(path[0], 0, "Path must start at node 0")
+        self.assertEqual(path[-1], 4, "Path must end at node 4")
+        self.assertIn(2, path, "Path must contain target node")
+        
+        for i in range(len(path) - 1):
+            self.assertIn(path[i + 1], self.simple_graph[path[i]][1],
+                         f"Nodes {path[i]} and {path[i + 1]} must be connected")
+            
+    def test_dijkstra_complex_graph(self):
+        global_game_data.current_graph_index = 1
+        global_game_data.target_node = [3]  
+        
+        path = pathing.get_dijkstra_path()
+        
+        self.assertIsNotNone(path)
+        self.assertEqual(path[0], 0)
+        self.assertEqual(path[-1], 4)
+        self.assertIn(3, path)
+        
+        self.assertLessEqual(len(path) - 1, 3, 
+                           "Path length in complex graph should be optimal")
+        
+    def test_astar_simple_graph(self):
+        global_game_data.current_graph_index = 0
+        global_game_data.target_node = [2]
+        
+        path = pathing.get_a_star_path()
+        
+        self.assertIsNotNone(path)
+        self.assertEqual(path[0], 0)
+        self.assertEqual(path[-1], 4)
+        self.assertIn(2, path)
+        
+        for i in range(len(path) - 1):
+            x1, y1 = self.simple_graph[path[i]][0]
+            x2, y2 = self.simple_graph[path[i + 1]][0]
+            manhattan_dist = abs(x1 - x2) + abs(y1 - y2)
+            self.assertLessEqual(manhattan_dist, len(path) - 1)
+            
+    def test_astar_complex_graph(self):
+        global_game_data.current_graph_index = 1
+        global_game_data.target_node = [3]
+        
+        path = pathing.get_a_star_path()
+        
+        self.assertIsNotNone(path)
+        self.assertEqual(path[0], 0)
+        self.assertEqual(path[-1], 4)
+        self.assertIn(3, path)
+        
+        self.assertLessEqual(len(path) - 1, 3)
+        
+    def test_dijkstra_no_path(self):
+        disconnected_graph = [
+            ((0, 0), [1]),
+            ((1, 1), [0]),
+            ((2, 2), [3]),
+            ((3, 3), [2]),
+            ((4, 4), [])
+        ]
+        graph_data.graph_data = [disconnected_graph]
+        global_game_data.current_graph_index = 0
+        global_game_data.target_node = [2]
+        
+        with self.assertRaises(Exception):
+            pathing.get_dijkstra_path()
+            
+    def test_astar_no_path(self):
+        disconnected_graph = [
+            ((0, 0), [1]),
+            ((1, 1), [0]),
+            ((2, 2), [3]),
+            ((3, 3), [2]),
+            ((4, 4), [])
+        ]
+        graph_data.graph_data = [disconnected_graph]
+        global_game_data.current_graph_index = 0
+        global_game_data.target_node = [2]
+        
+        with self.assertRaises(Exception):
+            pathing.get_a_star_path()
+            
 if __name__ == '__main__':
     unittest.main()

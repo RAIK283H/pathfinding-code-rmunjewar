@@ -1,6 +1,7 @@
 import graph_data
 import global_game_data
 from numpy import random
+import heapq
 
 def set_current_graph_paths():
     global_game_data.graph_paths.clear()
@@ -9,6 +10,8 @@ def set_current_graph_paths():
     global_game_data.graph_paths.append(get_dfs_path())
     global_game_data.graph_paths.append(get_bfs_path())
     global_game_data.graph_paths.append(get_dijkstra_path())
+    global_game_data.graph_paths.append(get_a_star_path())
+
 
 
 def get_test_path():
@@ -133,17 +136,118 @@ def get_bfs_path():
 def get_dijkstra_path():
     graph = graph_data.graph_data[global_game_data.current_graph_index]
     start_node = 0
-    target_node = global_game_Data.target_not[global_game_Data.current_graph_index]
+    target_node = global_game_data.target_node[global_game_data.current_graph_index]  
     end_node = len(graph) - 1
 
     def dijkstra(start, end):
-        queue = [((start), [start])]
+        distances = {node: float('infinity') for node in range(len(graph))}
+        distances[start] = 0
+        predecessors = {node: None for node in range(len(graph))}
+        
+        priority_queue = []
+        heapq.heappush(priority_queue, (0, start))  
+        
         visited = set()
 
-        while queue:
-            (node, path) = queue.pop(0)
-            if node not in visited:
-                if node == end:
+        while priority_queue:
+            current_distance, current_node = heapq.heappop(priority_queue)  
 
-    # finish this
-    return [1,2]
+            if current_node in visited:
+                continue
+            visited.add(current_node)
+
+            if current_node == end:
+                path = []
+                while current_node is not None:
+                    path.append(current_node)
+                    current_node = predecessors[current_node]
+                return path[::-1]
+
+            for neighbor in graph[current_node][1]:
+                if neighbor not in visited:
+                    new_distance = current_distance + 1  
+                    if new_distance < distances[neighbor]:
+                        distances[neighbor] = new_distance
+                        predecessors[neighbor] = current_node
+                        heapq.heappush(priority_queue, (new_distance, neighbor))
+        
+        return None
+
+    path_to_target = dijkstra(start_node, target_node)
+    path_from_target = dijkstra(target_node, end_node)
+
+    if path_to_target and path_from_target:
+        full_path = path_to_target + path_from_target[1:]
+        
+        assert full_path[0] == start_node, "Result path must begin at the start node"
+        assert full_path[-1] == end_node, "Result path must end at the exit node"
+        assert target_node in full_path, "Result path must include the target node"
+        assert all(full_path[i+1] in graph[full_path[i]][1] for i in range(len(full_path)-1)), \
+            "Every pair of sequential vertices in the path must be connected by an edge"
+        
+        return full_path
+    else:
+        return get_dijkstra_path()
+
+def get_a_star_path():
+    graph = graph_data.graph_data[global_game_data.current_graph_index]
+    start_node = 0
+    target_node = global_game_data.target_node[global_game_data.current_graph_index]
+    end_node = len(graph) - 1
+
+    def heuristic(node, goal):
+        # Simpler heuristic: use the node number as a rough estimate of distance
+        # This assumes nodes that are numerically further apart are generally more distant
+        return abs(node - goal)
+
+    def a_star(start, end):
+        distances = {node: float('infinity') for node in range(len(graph))}
+        distances[start] = 0
+        predecessors = {node: None for node in range(len(graph))}
+        
+        priority_queue = []
+        heapq.heappush(priority_queue, (0, start))
+        
+        visited = set()
+
+        while priority_queue:
+            _, current_node = heapq.heappop(priority_queue)
+
+            if current_node in visited:
+                continue
+            visited.add(current_node)
+
+            if current_node == end:
+                path = []
+                while current_node is not None:
+                    path.append(current_node)
+                    current_node = predecessors[current_node]
+                return path[::-1]
+
+            for neighbor in graph[current_node][1]:
+                if neighbor not in visited:
+                    new_distance = distances[current_node] + 1
+                    f_score = new_distance + heuristic(neighbor, end)
+                    
+                    if new_distance < distances[neighbor]:
+                        distances[neighbor] = new_distance
+                        predecessors[neighbor] = current_node
+                        heapq.heappush(priority_queue, (f_score, neighbor))
+        
+        return None
+
+    path_to_target = a_star(start_node, target_node)
+    path_from_target = a_star(target_node, end_node)
+
+    if path_to_target and path_from_target:
+        full_path = path_to_target + path_from_target[1:]
+        
+        assert full_path[0] == start_node, "Result path must begin at the start node"
+        assert full_path[-1] == end_node, "Result path must end at the exit node"
+        assert target_node in full_path, "Result path must include the target node"
+        assert all(full_path[i+1] in graph[full_path[i]][1] for i in range(len(full_path)-1)), \
+            "Every pair of sequential vertices in the path must be connected by an edge"
+        
+        return full_path
+    else:
+        return get_a_star_path()
