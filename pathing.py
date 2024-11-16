@@ -131,4 +131,19 @@ def get_bfs_path():
 
 
 def get_dijkstra_path():
+    graph = graph_data.graph_data[global_game_data.current_graph_index]
+    start_node = 0
+    target_node = global_game_Data.target_not[global_game_Data.current_graph_index]
+    end_node = len(graph) - 1
+
+    def dijkstra(start, end):
+        queue = [((start), [start])]
+        visited = set()
+
+        while queue:
+            (node, path) = queue.pop(0)
+            if node not in visited:
+                if node == end:
+
+    # finish this
     return [1,2]
