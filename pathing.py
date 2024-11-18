@@ -196,8 +196,6 @@ def get_a_star_path():
     end_node = len(graph) - 1
 
     def heuristic(node, goal):
-        # Simpler heuristic: use the node number as a rough estimate of distance
-        # This assumes nodes that are numerically further apart are generally more distant
         return abs(node - goal)
 
     def a_star(start, end):
