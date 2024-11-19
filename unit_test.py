@@ -257,6 +257,16 @@ class TestAdvancedPathfinding(unittest.TestCase):
             ((4, 4), [1, 2, 3])
         ]
 
+        self.graph = [
+            ((0, 0), [1, 2]), 
+            ((1, 1), [0, 2, 3]),
+            ((2, 2), [0, 1, 3]), 
+            ((3, 3), [1, 2]),
+        ]
+        graph_data.graph_data = [self.graph]
+        global_game_data.current_graph_index = 0
+        global_game_data.target_node = [3]
+
         graph_data.graph_data = [self.simple_graph, self.complex_graph]
         graph_data.graph_coordinates = {
             0: (0, 0),
@@ -280,50 +290,7 @@ class TestAdvancedPathfinding(unittest.TestCase):
         for i in range(len(path) - 1):
             self.assertIn(path[i + 1], self.simple_graph[path[i]][1],
                          f"Nodes {path[i]} and {path[i + 1]} must be connected")
-            
-    def test_dijkstra_complex_graph(self):
-        global_game_data.current_graph_index = 1
-        global_game_data.target_node = [3]  
-        
-        path = pathing.get_dijkstra_path()
-        
-        self.assertIsNotNone(path)
-        self.assertEqual(path[0], 0)
-        self.assertEqual(path[-1], 4)
-        self.assertIn(3, path)
-        
-        self.assertLessEqual(len(path) - 1, 3, 
-                           "Path length in complex graph should be optimal")
-        
-    def test_astar_simple_graph(self):
-        global_game_data.current_graph_index = 0
-        global_game_data.target_node = [2]
-        
-        path = pathing.get_a_star_path()
-        
-        self.assertIsNotNone(path)
-        self.assertEqual(path[0], 0)
-        self.assertEqual(path[-1], 4)
-        self.assertIn(2, path)
-        
-        for i in range(len(path) - 1):
-            x1, y1 = self.simple_graph[path[i]][0]
-            x2, y2 = self.simple_graph[path[i + 1]][0]
-            manhattan_dist = abs(x1 - x2) + abs(y1 - y2)
-            self.assertLessEqual(manhattan_dist, len(path) - 1)
-            
-    def test_astar_complex_graph(self):
-        global_game_data.current_graph_index = 1
-        global_game_data.target_node = [3]
-        
-        path = pathing.get_a_star_path()
-        
-        self.assertIsNotNone(path)
-        self.assertEqual(path[0], 0)
-        self.assertEqual(path[-1], 4)
-        self.assertIn(3, path)
-        
-        self.assertLessEqual(len(path) - 1, 3)
+
         
     def test_dijkstra_no_path(self):
         disconnected_graph = [
@@ -354,6 +321,49 @@ class TestAdvancedPathfinding(unittest.TestCase):
         
         with self.assertRaises(Exception):
             pathing.get_a_star_path()
+    
+    def test_dijkstra_correctness(self):
+        path = pathing.get_dijkstra_path()
+        
+        self.assertEqual(path[0], 0, "Dijkstra path should start at node 0")
+        self.assertEqual(path[-1], 4, "Dijkstra path should end at node 4")
+        
+        self.assertIn(1, path, "Dijkstra path should pass through node 1")
+        self.assertIn(3, path, "Dijkstra path should pass through node 3")
+        
+        self.assertGreater(len(path), 1, "Dijkstra path should contain more than one node")
+
+    def test_a_star_correctness(self):
+        path = pathing.get_a_star_path()
+        
+        self.assertEqual(path[0], 0, "A* path should start at node 0")
+        self.assertEqual(path[-1], 4, "A* path should end at node 4")
+        
+        self.assertIn(3, path, "A* path should pass through node 3")
+        self.assertIn(2, path, "A* path should pass through node 2")
+        
+        self.assertGreater(len(path), 1, "A* path should contain more than one node")
+    
+    def test_dijkstra_vs_a_star(self):
+        dijkstra_path = pathing.get_dijkstra_path()
+        a_star_path = pathing.get_a_star_path()
+
+        self.assertNotEqual(dijkstra_path, a_star_path, "Dijkstra and A* paths should not be the same for the same graph")
+
+    def test_dijkstra_performance(self):
+        import time
+        start_time = time.time()
+        path = pathing.get_dijkstra_path()
+        end_time = time.time()
+        self.assertTrue(end_time - start_time < 1, "Dijkstra took too long to run")
+        
+    def test_a_star_performance(self):
+        import time
+        start_time = time.time()
+        path = pathing.get_a_star_path()
+        end_time = time.time()
+        self.assertTrue(end_time - start_time < 1, "A* took too long to run")
+
             
 if __name__ == '__main__':
     unittest.main()

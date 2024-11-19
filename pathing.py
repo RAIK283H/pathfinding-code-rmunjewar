@@ -1,3 +1,5 @@
+from math import sqrt
+from queue import PriorityQueue
 import graph_data
 import global_game_data
 from numpy import random
@@ -189,49 +191,42 @@ def get_dijkstra_path():
     else:
         return get_dijkstra_path()
 
+def heuristic(node, goal):
+    x1, y1 = graph_data.graph_data[global_game_data.current_graph_index][node][0]
+    x2, y2 = graph_data.graph_data[global_game_data.current_graph_index][goal][0]
+    return sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2) 
+
 def get_a_star_path():
     graph = graph_data.graph_data[global_game_data.current_graph_index]
     start_node = 0
     target_node = global_game_data.target_node[global_game_data.current_graph_index]
     end_node = len(graph) - 1
 
-    def heuristic(node, goal):
-        return abs(node - goal)
-
     def a_star(start, end):
-        distances = {node: float('infinity') for node in range(len(graph))}
-        distances[start] = 0
-        predecessors = {node: None for node in range(len(graph))}
-        
-        priority_queue = []
-        heapq.heappush(priority_queue, (0, start))
-        
-        visited = set()
+        open_set = []
+        heapq.heappush(open_set, (0, start))
+        came_from = {start: None}
+        g_score = {node: float('infinity') for node in range(len(graph))}
+        g_score[start] = 0
+        f_score = {node: float('infinity') for node in range(len(graph))}
+        f_score[start] = heuristic(start, end)
 
-        while priority_queue:
-            _, current_node = heapq.heappop(priority_queue)
-
-            if current_node in visited:
-                continue
-            visited.add(current_node)
-
-            if current_node == end:
+        while open_set:
+            _, current = heapq.heappop(open_set)
+            if current == end:
                 path = []
-                while current_node is not None:
-                    path.append(current_node)
-                    current_node = predecessors[current_node]
+                while current is not None:
+                    path.append(current)
+                    current = came_from[current]
                 return path[::-1]
 
-            for neighbor in graph[current_node][1]:
-                if neighbor not in visited:
-                    new_distance = distances[current_node] + 1
-                    f_score = new_distance + heuristic(neighbor, end)
-                    
-                    if new_distance < distances[neighbor]:
-                        distances[neighbor] = new_distance
-                        predecessors[neighbor] = current_node
-                        heapq.heappush(priority_queue, (f_score, neighbor))
-        
+            for neighbor in graph[current][1]:
+                tentative_g_score = g_score[current] + 1
+                if tentative_g_score < g_score[neighbor]:
+                    came_from[neighbor] = current
+                    g_score[neighbor] = tentative_g_score
+                    f_score[neighbor] = g_score[neighbor] + heuristic(neighbor, end)
+                    heapq.heappush(open_set, (f_score[neighbor], neighbor))
         return None
 
     path_to_target = a_star(start_node, target_node)
