@@ -45,3 +45,5 @@ The random path generation algorithm for the Random Player works as follows:
 This statistic tracks the total number of unique nodes each player visits during their traversal from the start node to the exit node. This metric gives insight into how efficiently a player navigates through the graph:
 Test Player: Typically follows a straight line and visits fewer nodes since it uses an ideal path.
 Random Player: Tends to visit more nodes due to its random movements, often wandering before hitting the target and exit node.
+
+Did work on extra credit by implementing A\* algorithmn.
