@@ -1,9 +1,11 @@
 from math import sqrt
+import math
 from queue import PriorityQueue
 import graph_data
 import global_game_data
 from numpy import random
 import heapq
+import numpy as np
 
 def set_current_graph_paths():
     global_game_data.graph_paths.clear()
@@ -11,7 +13,8 @@ def set_current_graph_paths():
     global_game_data.graph_paths.append(get_random_path())
     global_game_data.graph_paths.append(get_dfs_path())
     global_game_data.graph_paths.append(get_bfs_path())
-    global_game_data.graph_paths.append(get_dijkstra_path())
+    # global_game_data.graph_paths.append(get_dijkstra_path())
+    global_game_data.graph_paths.append(get_floyd_warshall_path())
     global_game_data.graph_paths.append(get_a_star_path())
 
 
@@ -135,48 +138,117 @@ def get_bfs_path():
         return get_bfs_path() # again
 
 
-def get_dijkstra_path():
+# def get_dijkstra_path():
+#     graph = graph_data.graph_data[global_game_data.current_graph_index]
+#     start_node = 0
+#     target_node = global_game_data.target_node[global_game_data.current_graph_index]  
+#     end_node = len(graph) - 1
+
+#     def dijkstra(start, end):
+#         distances = {node: float('infinity') for node in range(len(graph))}
+#         distances[start] = 0
+#         predecessors = {node: None for node in range(len(graph))}
+        
+#         priority_queue = []
+#         heapq.heappush(priority_queue, (0, start))  
+        
+#         visited = set()
+
+#         while priority_queue:
+#             current_distance, current_node = heapq.heappop(priority_queue)  
+
+#             if current_node in visited:
+#                 continue
+#             visited.add(current_node)
+
+#             if current_node == end:
+#                 path = []
+#                 while current_node is not None:
+#                     path.append(current_node)
+#                     current_node = predecessors[current_node]
+#                 return path[::-1]
+
+#             for neighbor in graph[current_node][1]:
+#                 if neighbor not in visited:
+#                     new_distance = current_distance + 1  
+#                     if new_distance < distances[neighbor]:
+#                         distances[neighbor] = new_distance
+#                         predecessors[neighbor] = current_node
+#                         heapq.heappush(priority_queue, (new_distance, neighbor))
+        
+#         return None
+
+#     path_to_target = dijkstra(start_node, target_node)
+#     path_from_target = dijkstra(target_node, end_node)
+
+#     if path_to_target and path_from_target:
+#         full_path = path_to_target + path_from_target[1:]
+        
+#         assert full_path[0] == start_node, "Result path must begin at the start node"
+#         assert full_path[-1] == end_node, "Result path must end at the exit node"
+#         assert target_node in full_path, "Result path must include the target node"
+#         assert all(full_path[i+1] in graph[full_path[i]][1] for i in range(len(full_path)-1)), \
+#             "Every pair of sequential vertices in the path must be connected by an edge"
+        
+#         return full_path
+#     else:
+#         return get_dijkstra_path()
+
+def get_floyd_warshall_path():
     graph = graph_data.graph_data[global_game_data.current_graph_index]
     start_node = 0
-    target_node = global_game_data.target_node[global_game_data.current_graph_index]  
+    target_node = global_game_data.target_node[global_game_data.current_graph_index]
     end_node = len(graph) - 1
 
-    def dijkstra(start, end):
-        distances = {node: float('infinity') for node in range(len(graph))}
-        distances[start] = 0
-        predecessors = {node: None for node in range(len(graph))}
+    def convert_adjancy_list_to_matrix(graph):
+        n = len(graph)
+        matrix = np.full((n,n), np.inf)
+        np.fill_diagonal(matrix, 0)
         
-        priority_queue = []
-        heapq.heappush(priority_queue, (0, start))  
+        for node_index, node_data in enumerate(graph):
+            for neighbor_index in node_data[1]:
+                x1, y1 = graph[node_index][0]
+                x2, y2 = graph[neighbor_index][0]
+                distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+                matrix[node_index, neighbor_index] = distance
+        return matrix
+
+    def floyd_warshall(graph_matrix):
+        n = graph_matrix.shape[0]
+        dist = graph_matrix.copy()
+        parent = np.full((n, n), -1, dtype=int)
         
-        visited = set()
-
-        while priority_queue:
-            current_distance, current_node = heapq.heappop(priority_queue)  
-
-            if current_node in visited:
-                continue
-            visited.add(current_node)
-
-            if current_node == end:
-                path = []
-                while current_node is not None:
-                    path.append(current_node)
-                    current_node = predecessors[current_node]
-                return path[::-1]
-
-            for neighbor in graph[current_node][1]:
-                if neighbor not in visited:
-                    new_distance = current_distance + 1  
-                    if new_distance < distances[neighbor]:
-                        distances[neighbor] = new_distance
-                        predecessors[neighbor] = current_node
-                        heapq.heappush(priority_queue, (new_distance, neighbor))
+        for i in range(n):
+            for j in range(n):
+                if dist[i, j] != np.inf and i != j:
+                    parent[i, j] = i
         
-        return None
+        for k in range(n):
+            for i in range(n):
+                for j in range(n):
+                    if dist[i, k] + dist[k, j] < dist[i, j]:
+                        dist[i, j] = dist[i, k] + dist[k, j]
+                        parent[i, j] = parent[k, j]
+        
+        return dist, parent
 
-    path_to_target = dijkstra(start_node, target_node)
-    path_from_target = dijkstra(target_node, end_node)
+    def build_path(parent_matrix, start, end):
+        if parent_matrix[start, end] == -1:
+            return None
+        
+        path = [end]
+        current = end
+        while current != start:
+            current = parent_matrix[start, current]
+            path.insert(0, current)
+        return path
+
+    graph_matrix = convert_adjancy_list_to_matrix(graph)
+    
+    dist_matrix, parent_matrix = floyd_warshall(graph_matrix)
+    
+    path_to_target = build_path(parent_matrix, start_node, target_node)
+    path_from_target = build_path(parent_matrix, target_node, end_node)
 
     if path_to_target and path_from_target:
         full_path = path_to_target + path_from_target[1:]
@@ -189,7 +261,7 @@ def get_dijkstra_path():
         
         return full_path
     else:
-        return get_dijkstra_path()
+        return get_floyd_warshall_path()
 
 def heuristic(node, goal):
     x1, y1 = graph_data.graph_data[global_game_data.current_graph_index][node][0]
