@@ -46,4 +46,8 @@ This statistic tracks the total number of unique nodes each player visits during
 Test Player: Typically follows a straight line and visits fewer nodes since it uses an ideal path.
 Random Player: Tends to visit more nodes due to its random movements, often wandering before hitting the target and exit node.
 
-Did work on extra credit by implementing A\* algorithmn.
+Did work on extra credit by implementing A\* algorithm.
+
+Extra credit - Also did work on switching out get_dijkstra_path() with get_floyd_warshall_path().
+
+Note: The PNG is the same for the last algorithm, but a different color.
