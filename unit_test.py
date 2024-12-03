@@ -1,11 +1,18 @@
 import math
 import unittest
 
+import numpy as np
+
 import global_game_data
 import graph_data
 import pathing
 from permutation import calculate_distance, find_hamiltonian_cycles, find_largest_clique, find_optimal_cycles, is_clique, sjt_permutations, is_hamiltonian_cycle
-
+from f_w import (
+    convert_adjancy_list_to_matrix, 
+    floyd_warshall, 
+    build_path, 
+    get_floyd_warshall_path
+)
 
 class TestPathFinding(unittest.TestCase):
 
@@ -364,6 +371,99 @@ class TestAdvancedPathfinding(unittest.TestCase):
         end_time = time.time()
         self.assertTrue(end_time - start_time < 1, "A* took too long to run")
 
+class TestFloydWarshall(unittest.TestCase):
+    def setUp(self):
+        self.simple_graph = [
+            ((0, 0), [1, 2]),     
+            ((1, 1), [0, 3]),       
+            ((2, 2), [0, 3]),       
+            ((3, 3), [1, 2, 4]),    
+            ((4, 4), [3])          
+        ]
+        
+        self.complex_graph = [
+            ((0, 0), [1, 2, 3]), 
+            ((1, 1), [0, 2, 4]),
+            ((2, 2), [0, 1, 3, 4]),
+            ((3, 3), [0, 2, 4]),
+            ((4, 4), [1, 2, 3])
+        ]
+        
+        self.disconnected_graph = [
+            ((0, 0), [1]),
+            ((1, 1), [0]),
+            ((2, 2), [3]),
+            ((3, 3), [2]),
+            ((4, 4), [])
+        ]
+
+    def test_convert_adjacency_list_to_matrix(self):
+        graph = self.simple_graph
+        matrix = convert_adjancy_list_to_matrix(graph)
+        
+        self.assertEqual(matrix.shape, (len(graph), len(graph)))
+        
+        self.assertTrue(np.all(np.diag(matrix) == 0))
+   
+        x0, y0 = graph[0][0]
+        x1, y1 = graph[1][0]
+        expected_distance = math.sqrt((x1 - x0)**2 + (y1 - y0)**2)
+        
+        self.assertAlmostEqual(matrix[0, 1], expected_distance)
+        self.assertAlmostEqual(matrix[1, 0], expected_distance)
+        self.assertTrue(np.isinf(matrix[0, 4]))
+
+    def test_fw_baisc(self):
+        graph_matrix = convert_adjancy_list_to_matrix(self.simple_graph)
+        dist_matrix, parent_matrix = floyd_warshall(graph_matrix)
+        
+        self.assertEqual(dist_matrix.shape, (len(self.simple_graph), len(self.simple_graph)))
+        self.assertEqual(parent_matrix.shape, (len(self.simple_graph), len(self.simple_graph)))
+        
+        self.assertTrue(np.all(np.diag(dist_matrix) == 0)) 
+        self.assertTrue(np.all(dist_matrix >= 0)) 
+
+    def test_get_fw_path(self):
+        graph_data.graph_data = [self.simple_graph, self.complex_graph]
+        global_game_data.current_graph_index = 0
+        global_game_data.target_node = [2, 3]
+        
+        path = get_floyd_warshall_path()
+        
+        self.assertIsNotNone(path)
+        self.assertEqual(path[0], 0) 
+        self.assertEqual(path[-1], 4)  
+        self.assertIn(2, path) 
+        graph = self.simple_graph
+        for i in range(len(path) - 1):
+            self.assertIn(path[i + 1], graph[path[i]][1], 
+                          f"Nodes {path[i]} and {path[i + 1]} must be connected")
+
+    def test_fw_multiple_graphs(self):
+        test_graphs = [self.simple_graph, self.complex_graph]
+        
+        for i, graph in enumerate(test_graphs):
+            graph_data.graph_data = [graph]
+            global_game_data.current_graph_index = 0
+            global_game_data.target_node = [2]
             
+            path = get_floyd_warshall_path()
+            
+            self.assertIsNotNone(path)
+            self.assertEqual(path[0], 0)
+            self.assertEqual(path[-1], len(graph) - 1)
+            
+            self.assertIn(2, path)
+
+    def test_floyd_warshall_performance(self):
+        import time
+        graph_matrix = convert_adjancy_list_to_matrix(self.simple_graph)
+        
+        start_time = time.time()
+        floyd_warshall(graph_matrix)
+        end_time = time.time()
+        
+        self.assertTrue(end_time - start_time < 1, "Floyd-Warshall took too long to run")
+
 if __name__ == '__main__':
     unittest.main()
