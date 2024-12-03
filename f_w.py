@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import graph_data
 import global_game_data
@@ -8,9 +9,13 @@ def convert_adjancy_list_to_matrix(graph):
     np.fill_diagonal(matrix, 0)
     
     # all nodes
-    for node, (_, neighbors) in enumerate(graph):
-        for neighbor in neighbors:
-            matrix[node, neighbor] = 1 
+    for node_index, node_data in enumerate(graph):
+        for neighbor_index in node_data[1]:
+            # euclidean
+            x1, y1 = graph[node_index][0]
+            x2, y2 = graph[neighbor_index][0]
+            distance = math.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+            matrix[node_index, neighbor_index] = distance
     
     return matrix
 
@@ -51,7 +56,7 @@ def get_floyd_warshall_path():
     target_node = global_game_data.target_node[global_game_data.current_graph_index]
     end_node = len(graph) - 1
 
-    graph_matrix = convert_adjacency_list_to_matrix(graph)
+    graph_matrix = convert_adjancy_list_to_matrix(graph)
     
     dist_matrix, parent_matrix = floyd_warshall(graph_matrix)
     
